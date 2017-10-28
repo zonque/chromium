@@ -72,6 +72,8 @@ const char* VideoCaptureDeviceDescriptor::GetCaptureApiTypeString() const {
   switch (capture_api) {
     case VideoCaptureApi::LINUX_V4L2_SINGLE_PLANE:
       return "V4L2 SPLANE";
+    case VideoCaptureApi::LINUX_V4L2_MULTI_PLANE:
+      return "V4L2 MPLANE";
     case VideoCaptureApi::WIN_MEDIA_FOUNDATION:
       return "Media Foundation";
     case VideoCaptureApi::WIN_MEDIA_FOUNDATION_SENSOR:
