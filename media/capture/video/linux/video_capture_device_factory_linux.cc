@@ -65,7 +65,9 @@ bool HasUsableFormats(int fd, uint32_t capabilities) {
   const std::list<uint32_t>& usable_fourccs =
       VideoCaptureDeviceLinux::GetListOfUsableFourCCs(false);
   v4l2_fmtdesc fmtdesc = {};
-  fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  fmtdesc.type = (capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE)
+                     ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE
+                     : V4L2_BUF_TYPE_VIDEO_CAPTURE;
   for (; HANDLE_EINTR(ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc)) == 0;
        ++fmtdesc.index) {
     if (std::find(usable_fourccs.begin(), usable_fourccs.end(),
@@ -113,9 +115,12 @@ std::list<float> GetFrameRateList(int fd,
 
 void GetSupportedFormatsForV4L2BufferType(
     int fd,
+    VideoCaptureApi api,
     VideoCaptureFormats* supported_formats) {
   v4l2_fmtdesc v4l2_format = {};
-  v4l2_format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  v4l2_format.type = (api == VideoCaptureApi::LINUX_V4L2_MULTI_PLANE)
+                         ? V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE
+                         : V4L2_BUF_TYPE_VIDEO_CAPTURE;
   for (; HANDLE_EINTR(ioctl(fd, VIDIOC_ENUM_FMT, &v4l2_format)) == 0;
        ++v4l2_format.index) {
     VideoCaptureFormat supported_format;
@@ -210,21 +215,24 @@ void VideoCaptureDeviceFactoryLinux::GetDeviceDescriptors(
     // http://crbug.com/139356.
     v4l2_capability cap;
     if ((HANDLE_EINTR(ioctl(fd.get(), VIDIOC_QUERYCAP, &cap)) == 0) &&
-        (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE &&
-         !(cap.capabilities & V4L2_CAP_VIDEO_OUTPUT)) &&
+        (cap.capabilities &
+         (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)) &&
+        !(cap.capabilities &
+          (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE)) &&
         HasUsableFormats(fd.get(), cap.capabilities)) {
       const std::string model_id = GetDeviceModelId(unique_id);
+      VideoCaptureApi api = (cap.capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE)
+                                ? VideoCaptureApi::LINUX_V4L2_MULTI_PLANE
+                                : VideoCaptureApi::LINUX_V4L2_SINGLE_PLANE;
 #if defined(OS_CHROMEOS)
       static CameraConfigChromeOS* config = new CameraConfigChromeOS();
       device_descriptors->emplace_back(
-          reinterpret_cast<char*>(cap.card), unique_id, model_id,
-          VideoCaptureApi::LINUX_V4L2_SINGLE_PLANE,
+          reinterpret_cast<char*>(cap.card), unique_id, model_id, api,
           VideoCaptureTransportType::OTHER_TRANSPORT,
           config->GetCameraFacing(unique_id, model_id));
 #else
       device_descriptors->emplace_back(
-          reinterpret_cast<char*>(cap.card), unique_id, model_id,
-          VideoCaptureApi::LINUX_V4L2_SINGLE_PLANE);
+          reinterpret_cast<char*>(cap.card), unique_id, model_id, api);
 #endif
     }
   }
@@ -246,7 +254,8 @@ void VideoCaptureDeviceFactoryLinux::GetSupportedFormats(
   supported_formats->clear();
 
   DCHECK_NE(device.capture_api, VideoCaptureApi::UNKNOWN);
-  GetSupportedFormatsForV4L2BufferType(fd.get(), supported_formats);
+  GetSupportedFormatsForV4L2BufferType(fd.get(), device.capture_api,
+                                       supported_formats);
 }
 
 std::string VideoCaptureDeviceFactoryLinux::GetDeviceModelId(
