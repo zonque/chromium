@@ -62,22 +62,22 @@ static struct {
   VideoPixelFormat pixel_format;
   size_t num_planes;
 } const kSupportedFormatsAndPlanarity[] = {
-    {V4L2_PIX_FMT_YUV420, PIXEL_FORMAT_I420, 1},
-    {V4L2_PIX_FMT_Y16, PIXEL_FORMAT_Y16, 1},
-    {V4L2_PIX_FMT_Z16, PIXEL_FORMAT_Y16, 1},
-    {V4L2_PIX_FMT_INVZ, PIXEL_FORMAT_Y16, 1},
-    {V4L2_PIX_FMT_YUYV, PIXEL_FORMAT_YUY2, 1},
+  //  {V4L2_PIX_FMT_YUV420, PIXEL_FORMAT_I420, 1},
+  //  {V4L2_PIX_FMT_Y16, PIXEL_FORMAT_Y16, 1},
+  //  {V4L2_PIX_FMT_Z16, PIXEL_FORMAT_Y16, 1},
+  //  {V4L2_PIX_FMT_INVZ, PIXEL_FORMAT_Y16, 1},
+  //  {V4L2_PIX_FMT_YUYV, PIXEL_FORMAT_YUY2, 1},
     {V4L2_PIX_FMT_UYVY, PIXEL_FORMAT_UYVY, 1},
-    {V4L2_PIX_FMT_RGB24, PIXEL_FORMAT_RGB24, 1},
+//    {V4L2_PIX_FMT_RGB24, PIXEL_FORMAT_RGB24, 1},
     // MJPEG is usually sitting fairly low since we don't want to have to
     // decode. However, it is needed for large resolutions due to USB bandwidth
     // limitations, so GetListOfUsableFourCcs() can duplicate it on top, see
     // that method.
-    {V4L2_PIX_FMT_MJPEG, PIXEL_FORMAT_MJPEG, 1},
+//    {V4L2_PIX_FMT_MJPEG, PIXEL_FORMAT_MJPEG, 1},
     // JPEG works as MJPEG on some gspca webcams from field reports, see
     // https://code.google.com/p/webrtc/issues/detail?id=529, put it as the
     // least preferred format.
-    {V4L2_PIX_FMT_JPEG, PIXEL_FORMAT_MJPEG, 1},
+//    {V4L2_PIX_FMT_JPEG, PIXEL_FORMAT_MJPEG, 1},
 };
 
 // Maximum number of ioctl retries before giving up trying to reset controls.
